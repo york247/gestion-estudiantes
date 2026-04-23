@@ -7,12 +7,18 @@ import net.elpuig.daw2.javabeans.Alumno;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class ConsultaServlet extends HttpServlet {
     private static List<Alumno> alumnos = new ArrayList<>();
+
+    //conexion pgadmin
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/gestion-estudiantes?useSSL=false&serverTimezone=UTC";
+    private static final String JDBC_USER = "root";
+    private static final String JDBC_PASS = "";
 
     @Override
     public void init() {
@@ -32,7 +38,7 @@ public class ConsultaServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
-        String sql = req.getParameter("sql");
+        String sqlParam = req.getParameter("sql");
 
         resp.setContentType("text/html;charset=UTF-8");
         PrintWriter out = resp.getWriter();
@@ -47,19 +53,31 @@ public class ConsultaServlet extends HttpServlet {
         out.println("<h2>Usa JDBC para recuperar registros de una tabla</h2>");
         out.println("<hr>");
 
-        if (sql != null)
-            out.println("<p>Sentencia SQL introducida: " + sql + "</p>");
+        if (sqlParam != null)
+            out.println("<p>Sentencia SQL introducida: " + sqlParam + "</p>");
 
         out.println("<br>id&nbsp;&nbsp;curso&nbsp;&nbsp;nombre<br>");
 
-        // Esta vez! usamos la lista compartida con nuevos alumnos
-        for (Alumno a : alumnos) {
-            out.println(a.getId() + " " + a.getCurso() + " " + a.getNombre() + "<br>");
+        String sql = "SELECT id, curso, nombre FROM alumnos";
+
+        try (Connection cn = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String curso = rs.getString("curso");
+                String nombre = rs.getString("nombre");
+
+                out.println(id + " " + curso + " " + nombre + "<br>");
+            }
+
+        } catch (SQLException e) {
+            out.println("<p style='color:red'>Error JDBC: " + e.getMessage() + "</p>");
         }
 
         out.println("</body></html>");
     }
-
 
 
     //PARTE2
@@ -71,10 +89,6 @@ public class ConsultaServlet extends HttpServlet {
         int id = Integer.parseInt(req.getParameter("id"));
         String curso = req.getParameter("curso");
         String nombre = req.getParameter("nombre");
-
-        Alumno nuevo = new Alumno(id, curso, nombre);
-
-        alumnos.add(nuevo);
 
         resp.setContentType("text/html;charset=UTF-8");
         PrintWriter out = resp.getWriter();
@@ -89,7 +103,21 @@ public class ConsultaServlet extends HttpServlet {
         out.println("<h2>Usa JDBC para grabar un registro en una tabla</h2>");
         out.println("<hr>");
 
-        out.println("Filas afectadas: 1");
+        String sql = "INSERT INTO alumnos (id, curso, nombre) VALUES (?, ?, ?)";
+
+        try (Connection cn = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            ps.setString(2, curso);
+            ps.setString(3, nombre);
+
+            int filas = ps.executeUpdate();
+            out.println("Filas afectadas: " + filas);
+
+        } catch (SQLException e) {
+            out.println("<p style='color:red'>Error JDBC: " + e.getMessage() + "</p>");
+        }
 
         out.println("</body></html>");
     }
