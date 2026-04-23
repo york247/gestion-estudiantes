@@ -35,7 +35,7 @@ public class Report extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     public void init() throws ServletException {
-        Conexion.setURL("jdbc:mysql://172.16.0.42:3306/dbalumnos?user=app&password=app");
+        Conexion.setURL("jdbc:mysql://localhost:3306/gestion-estudiantes?useSSL=false&serverTimezone=UTC\"");
     }
 
     protected void service(HttpServletRequest request, HttpServletResponse response)
