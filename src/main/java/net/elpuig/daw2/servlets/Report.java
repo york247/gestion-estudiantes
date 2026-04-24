@@ -1,7 +1,8 @@
-package net.elpuig.daw2.m7.servlets;
+package net.elpuig.daw2.servlets;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.PreparedStatement;
 import java.util.HashMap;
 
 import jakarta.servlet.AsyncContext;
@@ -11,8 +12,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import net.elpuig.daw2.m7.jdbc.Conexion;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -35,7 +34,8 @@ public class Report extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     public void init() throws ServletException {
-        Conexion.setURL("jdbc:mysql://localhost:3306/gestion-estudiantes?useSSL=false&serverTimezone=UTC\"");
+        PreparedStatement Conexion;
+        ConsultaServlet.JDBC_URL("jdbc:mysql://localhost:3306/gestion-estudiantes?useSSL=false&serverTimezone=UTC\"");
     }
 
     protected void service(HttpServletRequest request, HttpServletResponse response)
