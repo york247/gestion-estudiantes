@@ -23,7 +23,7 @@
 
   <servlet>
     <servlet-name>Report</servlet-name>
-    <servlet-class>net.elpuig.daw2.m7.servlets.Report</servlet-class>
+    <servlet-class>net.elpuig.daw2.servlets.Report</servlet-class>
     <async-supported>true</async-supported>
   </servlet>
 

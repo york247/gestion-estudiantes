@@ -20,6 +20,10 @@ public class ConsultaServlet extends HttpServlet {
     private static final String JDBC_USER = "root";
     private static final String JDBC_PASS = "";
 
+    public static Connection getConexion() throws SQLException {
+        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+    }
+
     @Override
     public void init() {
         if (alumnos.isEmpty()) {
