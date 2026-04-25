@@ -1,8 +1,9 @@
 package net.elpuig.daw2.servlets;
 
-import java.io.File;
 import java.io.IOException;
-import java.sql.PreparedStatement;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 import jakarta.servlet.AsyncContext;
@@ -33,15 +34,10 @@ import net.sf.jasperreports.web.util.WebHtmlResourceHandler;
 public class Report extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    public void init() throws ServletException {
-        PreparedStatement Conexion;
-        ConsultaServlet.JDBC_URL("jdbc:mysql://localhost:3306/gestion-estudiantes?useSSL=false&serverTimezone=UTC\"");
-    }
-
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         final AsyncContext ctxAsincrono = request.startAsync();
-        ctxAsincrono.setTimeout(10_0000); // 10 segundos como maximo para generar el report
+        ctxAsincrono.setTimeout(10_000); // 10 segundos como maximo para generar el report
         ctxAsincrono.addListener(new AsyncListener() {
             public void onComplete(AsyncEvent event) throws IOException {
                 System.out.println("Informe generado");
@@ -65,82 +61,80 @@ public class Report extends HttpServlet {
             @Override
             public void run() {
                 try {
-                    // Localizar el informe compilado
-                    File informeCompilado = new File(
-                            getServletContext().getRealPath("/WEB-INF/informes/alumnos/Alumnos.jasper"));
+                    // Cargar el informe compilado desde el WAR
+                    InputStream is = getServletContext()
+                            .getResourceAsStream("/WEB-INF/informes/alumnos/Alumnos.jasper");
+                    JasperReport jasperReport = (JasperReport) JRLoader.loadObject(is);
 
-                    // Cargar el informe compilado
-                    JasperReport jasperReport = (JasperReport) JRLoader
-                            .loadObject(new File(informeCompilado.getPath()));
+                    // Actualizarlo con los datos de la BD usando la conexion de ConsultaServlet
+                    try (Connection cn = ConsultaServlet.getConexion()) {
+                        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport,
+                                new HashMap<String, Object>(0), cn);
 
-                    // Actualizarlo con los datos de la BD
-                    JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<String, Object>(0),
-                            Conexion.getConexion());
+                        /*
+                         * Ahora ejecutamos un metodo especifico segun el informe que haya seleccionado
+                         * el usuario
+                         */
 
-                    /*
-                     * Ahora ejecutamos un metodo especifico segun el informe que haya seleccionado
-                     * el usuario
-                     */
+                        // Obtener el tipo de informe seleccionado por el usuario
+                        String tipoInforme = request.getParameter("optInformes");
 
-                    // Obtener el tipo de informe seleccionado por el usuario
-                    String tipoInforme = request.getParameter("optInformes");
+                        response.setContentType(tipoInforme);
 
-                    response.setContentType(tipoInforme);
+                        if ("application/pdf".equals(tipoInforme)) {
 
-                    if ("application/pdf".equals(tipoInforme)) {
+                            JRPdfExporter exporter = new JRPdfExporter();
 
-                        JRPdfExporter exporter = new JRPdfExporter();
+                            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+                            SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+                            exporter.setConfiguration(configuration);
 
-                        exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-                        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
-                        SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
-                        exporter.setConfiguration(configuration);
+                            exporter.exportReport();
 
-                        exporter.exportReport();
+                        } else if ("application/vnd.ms-excel".equals(tipoInforme)) {
 
-                    } else if ("application/vnd.ms-excel".equals(tipoInforme)) {
+                            response.setHeader("Content-Disposition", "inline; filename=informe.xls");
+                            JRXlsExporter exporter = new JRXlsExporter();
 
-                        response.setHeader("Content-Disposition", "inline; filename=informe.xls");
-                        JRXlsExporter exporter = new JRXlsExporter();
+                            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
 
-                        exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                            SimpleXlsReportConfiguration configuration = new SimpleXlsReportConfiguration();
+                            exporter.setConfiguration(configuration);
 
-                        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+                            exporter.exportReport();
 
-                        SimpleXlsReportConfiguration configuration = new SimpleXlsReportConfiguration();
-                        exporter.setConfiguration(configuration);
+                        } else if ("application/msword".equals(tipoInforme)) {
 
-                        exporter.exportReport();
+                            response.setHeader("Content-Disposition", "inline; filename=informe.doc");
+                            JRDocxExporter exporter = new JRDocxExporter();
 
-                    } else if ("application/msword".equals(tipoInforme)) {
+                            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
 
-                        response.setHeader("Content-Disposition", "inline; filename=informe.doc");
-                        JRDocxExporter exporter = new JRDocxExporter();
+                            exporter.exportReport();
 
-                        exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-                        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+                        } else {
 
-                        exporter.exportReport();
+                            request.getSession().setAttribute(ImageServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE,
+                                    jasperPrint);
 
-                    } else {
+                            HtmlExporter exporter = new HtmlExporter();
 
-                        request.getSession().setAttribute(ImageServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE,
-                                jasperPrint);
+                            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
 
-                        HtmlExporter exporter = new HtmlExporter();
+                            SimpleHtmlExporterOutput exporterOutput = new SimpleHtmlExporterOutput(
+                                    response.getOutputStream());
+                            exporterOutput.setImageHandler(new WebHtmlResourceHandler("image?image={0}"));
 
-                        exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                            exporter.setExporterOutput(exporterOutput);
 
-                        SimpleHtmlExporterOutput exporterOutput = new SimpleHtmlExporterOutput(
-                                response.getOutputStream());
-                        exporterOutput.setImageHandler(new WebHtmlResourceHandler("image?image={0}"));
-
-                        exporter.setExporterOutput(exporterOutput);
-
-                        exporter.exportReport();
+                            exporter.exportReport();
+                        }
                     }
 
-                } catch (JRException | IOException e) {
+                } catch (JRException | IOException | SQLException e) {
                     e.printStackTrace();
                 } finally {
                     ctxAsincrono.complete();
