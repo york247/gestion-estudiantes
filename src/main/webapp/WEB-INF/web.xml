@@ -42,4 +42,33 @@
     <url-pattern>/image</url-pattern>
   </servlet-mapping>
 
+  <!-- Servlet Controlador -->
+  <servlet>
+    <servlet-name>Controlador</servlet-name>
+    <servlet-class>net.elpuig.daw2.servlets.Controlador</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Controlador</servlet-name>
+    <url-pattern>/Controlador</url-pattern>
+  </servlet-mapping>
+
+  <!-- Servlet Login -->
+  <servlet>
+    <servlet-name>Login</servlet-name>
+    <servlet-class>net.elpuig.daw2.servlets.Login</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Login</servlet-name>
+    <url-pattern>/Login</url-pattern>
+  </servlet-mapping>
+
+  <!-- Listener de sesiones -->
+  <listener>
+    <listener-class>net.elpuig.daw2.listener.WebSessionListener</listener-class>
+  </listener>
+
+  <!-- Timeout de sesión: 15 minutos -->
+  <session-config>
+    <session-timeout>15</session-timeout>
+  </session-config>
 </web-app>

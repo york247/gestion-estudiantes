@@ -1,44 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Gestión Estudiantes</title>
+    <style>
+        body {
+            background-color: #7B3F9E;
+            font-family: Arial, sans-serif;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
 
+        .header {
+            background-color: #6A2F8A;
+            text-align: center;
+            padding: 18px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            color: white;
+        }
+
+        .container {
+            padding: 20px 30px;
+        }
+
+        h2 {
+            color: white;
+            margin-top: 20px;
+            margin-bottom: 6px;
+        }
+
+        hr {
+            border: 1px solid #ccc;
+            margin-bottom: 12px;
+        }
+
+        a {
+            color: white;
+            margin-right: 16px;
+            font-size: 14px;
+        }
+
+        label {
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="password"] {
+            padding: 3px 6px;
+            margin-right: 8px;
+            width: 160px;
+        }
+
+        input[type="submit"] {
+            padding: 4px 12px;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
-
 <body>
 
-<h2> Consulta </h2>
+<div class="header">
+    <h1>Gestion de estudiantes</h1>
+</div>
 
-<form action="consulta" method="get">
-    Sentencia SQL: <input type="text" name="sql">
-    <input type="submit" value="Ejecutar consulta">
-</form>
+<div class="container">
 
-<h2>Alta alumno</h2>
+    <!-- Links de sesión -->
+    <div style="margin-bottom: 16px;">
+        <a href="Controlador?operacion=info">Informacion de sesion</a>
+        <a href="javascript:desconectar()">Desconectar</a>
+    </div>
 
-<form action="consulta" method="post">
-    <label>ID: <input type="number" name="id"></label>
-    <label>Curso: <input type="text" name="curso"></label>
-    <label>Nombre: <input type="text" name="nombre"></label>
+    <!-- Consultas -->
+    <h2>Consultas</h2>
+    <hr>
+    <form action="consulta" method="get">
+        <div class="form-row">
+            <input type="text" name="sql" value="SELECT a FROM Alumno a" style="width:280px;">
+            <input type="submit" value="Ejecutar">
+        </div>
+    </form>
 
-    <input type="submit" value="Alta alumno">
-</form>
+    <!-- Modificaciones (Alta con control de acceso) -->
+    <h2>Modificaciones</h2>
+    <hr>
+    <form action="Controlador" method="post">
+        <input type="hidden" name="operacion" value="alta">
+        <div class="form-row">
+            <label>ID <input type="number" name="txtID" style="width:60px;"></label>
+            <label>Curso <input type="text" name="txtCurso" style="width:120px;"></label>
+            <label>Nombre <input type="text" name="txtNombre" style="width:150px;"></label>
+            <input type="submit" value="Alta alumno">
+        </div>
+    </form>
 
+    <!-- Informes -->
+    <h2>Informes</h2>
+    <hr>
+    <form action="informe" method="post">
+        <div class="radio-group">
+            <label><input type="radio" name="optInformes" value="application/pdf" checked> PDF</label>
+            <label><input type="radio" name="optInformes" value="application/vnd.ms-excel"> Excel</label>
+            <label><input type="radio" name="optInformes" value="application/msword"> Word</label>
+            <label><input type="radio" name="optInformes" value="text/html"> HTML</label>
+        </div>
+        <input type="submit" value="Ver informe">
+    </form>
 
-<h2>Informes</h2>
+</div>
 
-<form action="informe" method="post">
-    <label>Formato:
-        <select name="optInformes">
-            <option value="application/pdf">PDF</option>
-            <option value="application/vnd.ms-excel">Excel (XLS)</option>
-            <option value="application/msword">Word (DOC)</option>
-            <option value="text/html">HTML</option>
-        </select>
-    </label>
-    <input type="submit" value="Generar informe">
-</form>
+<script type="text/javascript">
+    function desconectar() {
+        if (confirm("Con esta acción se finaliza la sesión actual. ¿Está seguro?")) {
+            window.location = "Controlador?operacion=desconectar";
+        }
+    }
+</script>
 
 </body>
 </html>
